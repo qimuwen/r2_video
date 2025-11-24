@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+.npm
+.yarn
+
+# Cloudflare
+.wrangler/
+wrangler.toml.backup
+
+# 配置文件（包含敏感信息）
+upload-tool/config.json
+**/config.json
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
+
+# 临时文件
+*.tmp
+*.temp
+

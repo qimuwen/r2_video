@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频播放器</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="player-page">
+    <div class="player-container">
+        <div class="player-header">
+            <button class="back-btn" onclick="history.back()">← 返回</button>
+            <h2 id="videoTitle">加载中...</h2>
+        </div>
+
+        <div class="player-wrapper">
+            <video id="videoPlayer" controls autoplay>
+                您的浏览器不支持 HTML5 视频播放。
+            </video>
+        </div>
+
+        <div class="player-info">
+            <div class="info-section">
+                <h3>📊 视频信息</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">分辨率:</span>
+                        <span class="info-value" id="resolution">检测中...</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">时长:</span>
+                        <span class="info-value" id="duration">--:--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">文件大小:</span>
+                        <span class="info-value" id="fileSize">检测中...</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">播放状态:</span>
+                        <span class="info-value" id="playStatus">准备中</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls-section">
+                <h3>⚙️ 播放控制</h3>
+                <div class="control-buttons">
+                    <button onclick="changePlaybackRate(0.5)">0.5x</button>
+                    <button onclick="changePlaybackRate(0.75)">0.75x</button>
+                    <button onclick="changePlaybackRate(1.0)" class="active">1.0x</button>
+                    <button onclick="changePlaybackRate(1.25)">1.25x</button>
+                    <button onclick="changePlaybackRate(1.5)">1.5x</button>
+                    <button onclick="changePlaybackRate(2.0)">2.0x</button>
+                </div>
+
+                <div class="control-buttons">
+                    <button onclick="skipTime(-10)">⏪ -10s</button>
+                    <button onclick="skipTime(-5)">⏪ -5s</button>
+                    <button onclick="togglePlay()">⏯️ 播放/暂停</button>
+                    <button onclick="skipTime(5)">⏩ +5s</button>
+                    <button onclick="skipTime(10)">⏩ +10s</button>
+                </div>
+
+                <div class="control-buttons">
+                    <button onclick="toggleMute()">🔇 静音</button>
+                    <button onclick="toggleFullscreen()">⛶ 全屏</button>
+                    <button onclick="downloadVideo()">💾 下载</button>
+                </div>
+            </div>
+
+            <div class="quality-section">
+                <h3>🎨 画质选择</h3>
+                <div class="quality-buttons" id="qualityButtons">
+                    <span style="color: #999; font-size: 14px;">当前版本仅支持原始画质</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const videoPlayer = document.getElementById('videoPlayer');
+        const urlParams = new URLSearchParams(window.location.search);
+        const videoUrl = urlParams.get('url');
+        const videoTitle = urlParams.get('title') || '未命名视频';
+
+        // 设置标题
+        document.getElementById('videoTitle').textContent = videoTitle;
+        document.title = videoTitle;
+
+        // 检查 URL
+        if (!videoUrl) {
+            alert('错误：未提供视频 URL');
+            history.back();
+        } else {
+            videoPlayer.src = videoUrl;
+        }
+
+        // 格式化时间
+        function formatTime(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+
+            if (h > 0) {
+                return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // 格式化文件大小
+        function formatSize(bytes) {
+            if (bytes === 0) return '未知';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 视频加载元数据
+        videoPlayer.addEventListener('loadedmetadata', () => {
+            document.getElementById('duration').textContent = formatTime(videoPlayer.duration);
+            document.getElementById('resolution').textContent = `${videoPlayer.videoWidth} x ${videoPlayer.videoHeight}`;
+        });
+
+        // 视频开始播放
+        videoPlayer.addEventListener('play', () => {
+            document.getElementById('playStatus').textContent = '▶️ 播放中';
+        });
+
+        // 视频暂停
+        videoPlayer.addEventListener('pause', () => {
+            document.getElementById('playStatus').textContent = '⏸️ 已暂停';
+        });
+
+        // 视频结束
+        videoPlayer.addEventListener('ended', () => {
+            document.getElementById('playStatus').textContent = '✅ 播放完成';
+        });
+
+        // 获取文件大小
+        fetch(videoUrl, { method: 'HEAD' })
+            .then(response => {
+                const size = response.headers.get('Content-Length');
+                if (size) {
+                    document.getElementById('fileSize').textContent = formatSize(parseInt(size));
+                }
+            })
+            .catch(() => {
+                document.getElementById('fileSize').textContent = '未知';
+            });
+
+        // 播放控制函数
+        function changePlaybackRate(rate) {
+            videoPlayer.playbackRate = rate;
+            document.querySelectorAll('.control-buttons button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        function skipTime(seconds) {
+            videoPlayer.currentTime += seconds;
+        }
+
+        function togglePlay() {
+            if (videoPlayer.paused) {
+                videoPlayer.play();
+            } else {
+                videoPlayer.pause();
+            }
+        }
+
+        function toggleMute() {
+            videoPlayer.muted = !videoPlayer.muted;
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                videoPlayer.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        function downloadVideo() {
+            const a = document.createElement('a');
+            a.href = videoUrl;
+            a.download = videoTitle + '.mp4';
+            a.click();
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case ' ':
+                    e.preventDefault();
+                    togglePlay();
+                    break;
+                case 'ArrowLeft':
+                    skipTime(-5);
+                    break;
+                case 'ArrowRight':
+                    skipTime(5);
+                    break;
+                case 'f':
+                    toggleFullscreen();
+                    break;
+                case 'm':
+                    toggleMute();
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>
+

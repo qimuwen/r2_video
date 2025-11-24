@@ -1,0 +1,44 @@
+# GitHub Actions 自动部署配置
+# 推送到主分支时自动部署到 Cloudflare Workers
+
+name: Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy Worker
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          cd worker
+          npm install
+
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: 'worker'
+          command: deploy
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Output deployment info
+        run: |
+          echo "✅ Worker deployed successfully!"
+          echo "🔗 Worker URL: https://${{ secrets.WORKER_NAME }}.workers.dev"
+

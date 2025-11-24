@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R2 视频库</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🎬 R2 视频库</h1>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索视频...">
+                <button onclick="searchVideos()">🔍 搜索</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all">全部</button>
+            <button class="filter-btn" data-filter="recent">最近添加</button>
+            <button class="filter-btn" data-filter="popular">热门</button>
+        </div>
+
+        <div class="video-grid" id="videoGrid">
+            <!-- 视频卡片会通过 JavaScript 动态加载 -->
+        </div>
+
+        <div class="loading" id="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>加载中...</p>
+        </div>
+
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <p>😕 没有找到视频</p>
+        </div>
+    </main>
+
+    <script>
+        // 配置
+        const WORKER_URL = 'https://your-worker.workers.dev'; // 替换为你的 Worker 域名
+        const SECRET_KEY = 'your-secret-key-change-this'; // 替换为你的密钥
+
+        // 示例视频数据（实际应该从 API 获取）
+        const sampleVideos = [
+            {
+                id: 1,
+                title: '示例视频 1',
+                path: 'video/sample1.mp4',
+                thumbnail: 'https://via.placeholder.com/400x225/667eea/ffffff?text=Video+1',
+                duration: '10:25',
+                views: 1234,
+                uploadDate: '2024-01-15'
+            },
+            {
+                id: 2,
+                title: '示例视频 2',
+                path: 'video/sample2.mp4',
+                thumbnail: 'https://via.placeholder.com/400x225/764ba2/ffffff?text=Video+2',
+                duration: '15:30',
+                views: 5678,
+                uploadDate: '2024-01-20'
+            },
+            {
+                id: 3,
+                title: '示例视频 3',
+                path: 'video/sample3.mp4',
+                thumbnail: 'https://via.placeholder.com/400x225/f093fb/ffffff?text=Video+3',
+                duration: '08:15',
+                views: 9012,
+                uploadDate: '2024-01-25'
+            }
+        ];
+
+        // 生成签名 URL
+        async function generateSignedUrl(path, expiresIn = 86400) {
+            const expires = Math.floor(Date.now() / 1000) + expiresIn;
+            const data = `${path}:${expires}`;
+
+            const encoder = new TextEncoder();
+            const key = await crypto.subtle.importKey(
+                'raw',
+                encoder.encode(SECRET_KEY),
+                { name: 'HMAC', hash: 'SHA-256' },
+                false,
+                ['sign']
+            );
+
+            const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(data));
+            const signatureHex = Array.from(new Uint8Array(signature))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+
+            return `${WORKER_URL}/${path}?expires=${expires}&signature=${signatureHex}`;
+        }
+
+        // 渲染视频卡片
+        function renderVideoCard(video) {
+            return `
+                <div class="video-card" data-id="${video.id}">
+                    <div class="video-thumbnail">
+                        <img src="${video.thumbnail}" alt="${video.title}">
+                        <div class="video-duration">${video.duration}</div>
+                        <div class="play-overlay">
+                            <div class="play-btn">▶</div>
+                        </div>
+                    </div>
+                    <div class="video-info">
+                        <h3 class="video-title">${video.title}</h3>
+                        <div class="video-meta">
+                            <span>👁️ ${video.views.toLocaleString()} 次观看</span>
+                            <span>📅 ${video.uploadDate}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 加载视频列表
+        async function loadVideos(filter = 'all') {
+            const grid = document.getElementById('videoGrid');
+            const loading = document.getElementById('loading');
+            const emptyState = document.getElementById('emptyState');
+
+            loading.style.display = 'flex';
+            grid.innerHTML = '';
+            emptyState.style.display = 'none';
+
+            // 模拟 API 延迟
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            let videos = [...sampleVideos];
+
+            // 应用筛选
+            if (filter === 'recent') {
+                videos.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
+            } else if (filter === 'popular') {
+                videos.sort((a, b) => b.views - a.views);
+            }
+
+            loading.style.display = 'none';
+
+            if (videos.length === 0) {
+                emptyState.style.display = 'flex';
+            } else {
+                grid.innerHTML = videos.map(renderVideoCard).join('');
+
+                // 添加点击事件
+                document.querySelectorAll('.video-card').forEach(card => {
+                    card.addEventListener('click', async () => {
+                        const videoId = card.dataset.id;
+                        const video = videos.find(v => v.id == videoId);
+                        await playVideo(video);
+                    });
+                });
+            }
+        }
+
+        // 播放视频
+        async function playVideo(video) {
+            const signedUrl = await generateSignedUrl(video.path);
+            window.location.href = `player.html?url=${encodeURIComponent(signedUrl)}&title=${encodeURIComponent(video.title)}`;
+        }
+
+        // 搜索视频
+        function searchVideos() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.video-card');
+            let hasResults = false;
+
+            cards.forEach(card => {
+                const title = card.querySelector('.video-title').textContent.toLowerCase();
+                if (title.includes(query)) {
+                    card.style.display = 'block';
+                    hasResults = true;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            document.getElementById('emptyState').style.display = hasResults ? 'none' : 'flex';
+        }
+
+        // 筛选按钮事件
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                loadVideos(btn.dataset.filter);
+            });
+        });
+
+        // 搜索框回车事件
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchVideos();
+            }
+        });
+
+        // 初始加载
+        loadVideos();
+    </script>
+</body>
+</html>
+

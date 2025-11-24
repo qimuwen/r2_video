@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R2 视频服务器 - 一键部署</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f5f5f5;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .platform-section {
+            display: none;
+        }
+
+        .platform-section.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .label-required::after {
+            content: " *";
+            color: #e74c3c;
+        }
+
+        .label-hint {
+            display: block;
+            font-size: 13px;
+            color: #666;
+            font-weight: normal;
+            margin-top: 4px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-action {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .info-box h3 {
+            color: #2980b9;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+        }
+
+        .info-box li {
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .success-box {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 20px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .success-box.show {
+            display: block;
+        }
+
+        .success-box h3 {
+            color: #155724;
+            margin-bottom: 15px;
+        }
+
+        .success-info {
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+
+        .success-info strong {
+            display: block;
+            color: #155724;
+            margin-bottom: 5px;
+        }
+
+        .success-info code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 13px;
+            word-break: break-all;
+        }
+
+        .deploy-steps {
+            margin-top: 20px;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .step-content h4 {
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .step-content p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 4px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .generated-key {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+            word-break: break-all;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 R2 视频服务器</h1>
+            <p>一键部署到 Cloudflare Workers 或 Vercel</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('cloudflare')">
+                Cloudflare Workers
+            </button>
+            <button class="tab" onclick="switchTab('vercel')">
+                Vercel
+            </button>
+        </div>
+
+        <div class="content">
+            <!-- Cloudflare Workers 部署 -->
+            <div id="cloudflare-section" class="platform-section active">
+                <div class="info-box">
+                    <h3>📋 部署前准备</h3>
+                    <ul>
+                        <li>已注册 Cloudflare 账号</li>
+                        <li>已创建 R2 存储桶（或在部署时创建）</li>
+                        <li>GitHub 账号（用于授权）</li>
+                    </ul>
+                </div>
+
+                <form id="cloudflare-form">
+                    <div class="form-group">
+                        <label class="label-required">
+                            R2 存储桶名称
+                            <span class="label-hint">在 Cloudflare Dashboard 中创建的 R2 存储桶名称</span>
+                        </label>
+                        <input type="text" id="cf-bucket" placeholder="my-video-bucket" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="label-required">
+                            防盗链密钥
+                            <span class="label-hint">用于签名 URL，确保视频安全访问</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="password" id="cf-secret" placeholder="至少 32 位随机字符串" required>
+                            <div class="input-action">
+                                <button type="button" class="btn btn-secondary" onclick="generateSecret('cf-secret')">
+                                    自动生成
+                                </button>
+                            </div>
+                        </div>
+                        <div id="cf-secret-display" class="generated-key" style="display: none;"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            允许的域名（可选）
+                            <span class="label-hint">用逗号分隔多个域名，如：example.com,www.example.com</span>
+                        </label>
+                        <input type="text" id="cf-domains" placeholder="yourdomain.com,www.yourdomain.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="label-required">
+                            Worker 名称
+                            <span class="label-hint">Cloudflare Worker 的名称，全局唯一</span>
+                        </label>
+                        <input type="text" id="cf-worker-name" placeholder="r2-video-proxy" value="r2-video-proxy" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        🚀 部署到 Cloudflare Workers
+                    </button>
+                </form>
+
+                <div id="cf-success" class="success-box">
+                    <h3>✅ 配置已生成！</h3>
+                    <p>请按照以下步骤完成部署：</p>
+
+                    <div class="deploy-steps">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h4>Fork 仓库</h4>
+                                <p>点击下方按钮 Fork 此项目到你的 GitHub 账号</p>
+                                <a href="https://github.com/your-repo/r2-video-server/fork" target="_blank" class="btn btn-primary" style="display: inline-block; margin-top: 10px;">
+                                    Fork to GitHub
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h4>部署 Worker</h4>
+                                <p>在命令行中运行以下命令：</p>
+                                <div class="success-info">
+                                    <code id="cf-deploy-command"></code>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h4>保存配置信息</h4>
+                                <div class="success-info">
+                                    <strong>存储桶名称:</strong>
+                                    <code id="cf-bucket-display"></code>
+                                </div>
+                                <div class="success-info">
+                                    <strong>防盗链密钥:</strong>
+                                    <code id="cf-secret-display-final"></code>
+                                </div>
+                                <div class="success-info" id="cf-domains-display-box" style="display: none;">
+                                    <strong>允许的域名:</strong>
+                                    <code id="cf-domains-display"></code>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <h4>配置前端</h4>
+                                <p>使用生成的配置更新前端文件（frontend/index.html 和 player.html）</p>
+                                <button class="btn btn-secondary" onclick="downloadConfig('cloudflare')">
+                                    📥 下载配置文件
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="cf-error" class="error-message"></div>
+            </div>
+
+            <!-- Vercel 部署 -->
+            <div id="vercel-section" class="platform-section">
+                <div class="info-box">
+                    <h3>📋 Vercel 部署说明</h3>
+                    <ul>
+                        <li>Vercel 主要用于部署前端播放器</li>
+                        <li>Worker 服务仍需部署到 Cloudflare</li>
+                        <li>适合需要自定义域名的场景</li>
+                    </ul>
+                </div>
+
+                <form id="vercel-form">
+                    <div class="form-group">
+                        <label class="label-required">
+                            Worker URL
+                            <span class="label-hint">已部署的 Cloudflare Worker 地址</span>
+                        </label>
+                        <input type="text" id="vercel-worker-url" placeholder="https://r2-video-proxy.xxx.workers.dev" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="label-required">
+                            防盗链密钥
+                            <span class="label-hint">与 Worker 中配置的密钥保持一致</span>
+                        </label>
+                        <input type="password" id="vercel-secret" placeholder="与 Worker 相同的密钥" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            项目名称
+                            <span class="label-hint">Vercel 项目的名称</span>
+                        </label>
+                        <input type="text" id="vercel-project" placeholder="r2-video-frontend" value="r2-video-frontend">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        🚀 部署到 Vercel
+                    </button>
+                </form>
+
+                <div id="vercel-success" class="success-box">
+                    <h3>✅ 配置已生成！</h3>
+                    <p>点击下方按钮一键部署到 Vercel：</p>
+
+                    <a id="vercel-deploy-button" href="#" target="_blank" class="btn btn-primary" style="display: inline-block; margin-top: 20px;">
+                        Deploy to Vercel
+                    </a>
+
+                    <div class="deploy-steps" style="margin-top: 30px;">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h4>配置环境变量</h4>
+                                <p>在 Vercel 部署页面添加以下环境变量：</p>
+                                <div class="success-info">
+                                    <strong>WORKER_URL:</strong>
+                                    <code id="vercel-worker-display"></code>
+                                </div>
+                                <div class="success-info">
+                                    <strong>SECRET_KEY:</strong>
+                                    <code id="vercel-secret-display"></code>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h4>完成部署</h4>
+                                <p>点击 Deploy 按钮，等待部署完成</p>
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h4>访问你的应用</h4>
+                                <p>部署完成后，Vercel 会提供一个访问 URL</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="vercel-error" class="error-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(platform) {
+            // 更新标签状态
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // 显示对应内容
+            document.querySelectorAll('.platform-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(platform + '-section').classList.add('active');
+        }
+
+        function generateSecret(inputId) {
+            // 生成 64 位十六进制随机字符串
+            const array = new Uint8Array(32);
+            crypto.getRandomValues(array);
+            const secret = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+
+            const input = document.getElementById(inputId);
+            input.type = 'text';
+            input.value = secret;
+
+            // 显示生成的密钥
+            const displayId = inputId + '-display';
+            const display = document.getElementById(displayId);
+            if (display) {
+                display.textContent = secret;
+                display.style.display = 'block';
+            }
+
+            // 3 秒后隐藏
+            setTimeout(() => {
+                input.type = 'password';
+            }, 3000);
+        }
+
+        // Cloudflare 表单提交
+        document.getElementById('cloudflare-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const bucket = document.getElementById('cf-bucket').value;
+            const secret = document.getElementById('cf-secret').value;
+            const domains = document.getElementById('cf-domains').value;
+            const workerName = document.getElementById('cf-worker-name').value;
+
+            // 验证密钥长度
+            if (secret.length < 32) {
+                showError('cf-error', '密钥长度至少需要 32 位字符！');
+                return;
+            }
+
+            // 显示成功信息
+            document.getElementById('cf-bucket-display').textContent = bucket;
+            document.getElementById('cf-secret-display-final').textContent = secret;
+
+            if (domains) {
+                document.getElementById('cf-domains-display').textContent = domains;
+                document.getElementById('cf-domains-display-box').style.display = 'block';
+            }
+
+            // 生成部署命令
+            const deployCommand = `cd worker && npm install && npx wrangler deploy --var SECRET_KEY:${secret} --var BUCKET_NAME:${bucket}` +
+                                 (domains ? ` --var ALLOWED_DOMAINS:${domains}` : '');
+            document.getElementById('cf-deploy-command').textContent = deployCommand;
+
+            document.getElementById('cf-success').classList.add('show');
+            hideError('cf-error');
+
+            // 滚动到结果
+            document.getElementById('cf-success').scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // Vercel 表单提交
+        document.getElementById('vercel-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const workerUrl = document.getElementById('vercel-worker-url').value;
+            const secret = document.getElementById('vercel-secret').value;
+            const project = document.getElementById('vercel-project').value;
+
+            // 验证 URL 格式
+            try {
+                new URL(workerUrl);
+            } catch {
+                showError('vercel-error', '请输入有效的 Worker URL！');
+                return;
+            }
+
+            // 显示配置信息
+            document.getElementById('vercel-worker-display').textContent = workerUrl;
+            document.getElementById('vercel-secret-display').textContent = secret;
+
+            // 生成 Vercel 部署链接
+            const repoUrl = 'https://github.com/your-username/r2-video-server';
+            const deployUrl = `https://vercel.com/new/clone?repository-url=${encodeURIComponent(repoUrl)}&env=WORKER_URL,SECRET_KEY&envDescription=R2%20Video%20Server%20Configuration&envLink=https://github.com/your-username/r2-video-server&project-name=${project}`;
+
+            document.getElementById('vercel-deploy-button').href = deployUrl;
+            document.getElementById('vercel-success').classList.add('show');
+            hideError('vercel-error');
+
+            // 滚动到结果
+            document.getElementById('vercel-success').scrollIntoView({ behavior: 'smooth' });
+        });
+
+        function showError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.textContent = message;
+            errorElement.classList.add('show');
+        }
+
+        function hideError(elementId) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.classList.remove('show');
+        }
+
+        function downloadConfig(platform) {
+            let configData = {};
+
+            if (platform === 'cloudflare') {
+                configData = {
+                    platform: 'Cloudflare Workers',
+                    bucket_name: document.getElementById('cf-bucket').value,
+                    secret_key: document.getElementById('cf-secret').value,
+                    allowed_domains: document.getElementById('cf-domains').value,
+                    worker_name: document.getElementById('cf-worker-name').value,
+                    note: '请妥善保管此配置文件，不要泄露密钥！'
+                };
+            }
+
+            const blob = new Blob([JSON.stringify(configData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'r2-video-config.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
+

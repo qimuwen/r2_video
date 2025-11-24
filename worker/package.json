@@ -1,0 +1,19 @@
+{
+  "name": "r2-video-worker",
+  "version": "1.0.0",
+  "description": "Cloudflare Workers for R2 Video Streaming",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:prod": "wrangler deploy --env production",
+    "tail": "wrangler tail"
+  },
+  "keywords": ["cloudflare", "workers", "r2", "video", "streaming"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
+

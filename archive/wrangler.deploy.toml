@@ -1,0 +1,40 @@
+# Cloudflare Workers 部署配置模板
+# 用于一键部署功能
+
+name = "r2-video-proxy"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+workers_dev = true
+
+# R2 存储桶绑定 - 部署时会提示配置
+[[r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "$BUCKET_NAME"  # 将在部署时替换
+preview_bucket_name = "$BUCKET_NAME"
+
+# 环境变量 - 部署时会提示填写
+[vars]
+SECRET_KEY = "$SECRET_KEY"  # 将在部署时自动生成或手动输入
+# ALLOWED_DOMAINS = "$ALLOWED_DOMAINS"  # 可选：域名白名单
+
+# 部署时需要的 Secrets（通过 Wrangler Secrets 管理）
+# 这些不会存储在配置文件中，更安全
+# [secrets]
+# SECRET_KEY - 将通过 wrangler secret put 设置
+
+[observability]
+enabled = true
+
+# 部署说明
+# 1. 点击 "Deploy to Cloudflare Workers" 按钮
+# 2. 授权 GitHub 访问
+# 3. 填写以下配置：
+#    - R2 存储桶名称（必填）
+#    - 防盗链密钥（自动生成或手动填写）
+#    - 允许的域名列表（可选）
+# 4. 点击部署，系统会自动：
+#    - 创建 Worker
+#    - 绑定 R2 存储桶
+#    - 设置环境变量
+#    - 返回 Worker URL
+

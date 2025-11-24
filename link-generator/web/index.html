@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R2 视频链接生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .input-hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .result-url {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            border: 2px solid #e0e0e0;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #333;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .copy-btn {
+            margin-top: 10px;
+            background: #28a745;
+            padding: 10px 20px;
+            width: auto;
+        }
+
+        .copy-btn:hover {
+            background: #218838;
+        }
+
+        .success-msg {
+            color: #28a745;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .success-msg.show {
+            display: block;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .info-box p {
+            color: #1976D2;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 R2 视频链接生成器</h1>
+        <p class="subtitle">生成带签名和过期时间的安全视频链接</p>
+
+        <div class="info-box">
+            <p>💡 <strong>提示：</strong>生成的链接包含防盗链签名，可设置过期时间，确保视频安全。</p>
+        </div>
+
+        <form id="linkForm">
+            <div class="form-group">
+                <label for="workerUrl">Worker 域名 *</label>
+                <input type="text" id="workerUrl" placeholder="https://your-worker.workers.dev" required>
+                <div class="input-hint">你的 Cloudflare Worker 域名</div>
+            </div>
+
+            <div class="form-group">
+                <label for="videoPath">视频路径 *</label>
+                <input type="text" id="videoPath" placeholder="video/sample/movie.mp4" required>
+                <div class="input-hint">R2 存储桶中的视频路径（不要以 / 开头）</div>
+            </div>
+
+            <div class="form-group">
+                <label for="secretKey">密钥 (Secret Key) *</label>
+                <input type="password" id="secretKey" placeholder="your-secret-key" required>
+                <div class="input-hint">与 Worker 中配置的 SECRET_KEY 一致</div>
+            </div>
+
+            <div class="form-group">
+                <label for="expiresIn">有效期</label>
+                <select id="expiresIn">
+                    <option value="3600">1 小时</option>
+                    <option value="21600">6 小时</option>
+                    <option value="86400" selected>24 小时</option>
+                    <option value="604800">7 天</option>
+                    <option value="2592000">30 天</option>
+                    <option value="custom">自定义（秒）</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="customExpiresGroup" style="display: none;">
+                <label for="customExpires">自定义有效期（秒）</label>
+                <input type="number" id="customExpires" placeholder="3600" min="1">
+            </div>
+
+            <button type="submit">🔗 生成签名链接</button>
+        </form>
+
+        <div class="result" id="result">
+            <div class="result-label">✅ 生成的链接：</div>
+            <div class="result-url" id="resultUrl"></div>
+            <button class="copy-btn" onclick="copyToClipboard()">📋 复制链接</button>
+            <div class="success-msg" id="successMsg">✅ 已复制到剪贴板！</div>
+        </div>
+    </div>
+
+    <script>
+        // 监听过期时间选择
+        document.getElementById('expiresIn').addEventListener('change', function() {
+            const customGroup = document.getElementById('customExpiresGroup');
+            if (this.value === 'custom') {
+                customGroup.style.display = 'block';
+            } else {
+                customGroup.style.display = 'none';
+            }
+        });
+
+        // 表单提交
+        document.getElementById('linkForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const workerUrl = document.getElementById('workerUrl').value.trim();
+            const videoPath = document.getElementById('videoPath').value.trim();
+            const secretKey = document.getElementById('secretKey').value;
+
+            let expiresIn = document.getElementById('expiresIn').value;
+            if (expiresIn === 'custom') {
+                expiresIn = parseInt(document.getElementById('customExpires').value);
+                if (!expiresIn || expiresIn < 1) {
+                    alert('请输入有效的自定义过期时间');
+                    return;
+                }
+            } else {
+                expiresIn = parseInt(expiresIn);
+            }
+
+            // 生成签名
+            const signedUrl = await generateSignedUrl(workerUrl, videoPath, secretKey, expiresIn);
+
+            // 显示结果
+            document.getElementById('resultUrl').textContent = signedUrl;
+            document.getElementById('result').classList.add('show');
+
+            // 滚动到结果
+            document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // 生成签名 URL
+        async function generateSignedUrl(workerUrl, path, secretKey, expiresIn) {
+            const expires = Math.floor(Date.now() / 1000) + expiresIn;
+            const data = `${path}:${expires}`;
+
+            // 使用 Web Crypto API 生成 HMAC-SHA256
+            const encoder = new TextEncoder();
+            const key = await crypto.subtle.importKey(
+                'raw',
+                encoder.encode(secretKey),
+                { name: 'HMAC', hash: 'SHA-256' },
+                false,
+                ['sign']
+            );
+
+            const signature = await crypto.subtle.sign(
+                'HMAC',
+                key,
+                encoder.encode(data)
+            );
+
+            const signatureHex = Array.from(new Uint8Array(signature))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+
+            // 构建完整 URL
+            const baseUrl = workerUrl.endsWith('/') ? workerUrl.slice(0, -1) : workerUrl;
+            return `${baseUrl}/${path}?expires=${expires}&signature=${signatureHex}`;
+        }
+
+        // 复制到剪贴板
+        function copyToClipboard() {
+            const url = document.getElementById('resultUrl').textContent;
+            navigator.clipboard.writeText(url).then(() => {
+                const msg = document.getElementById('successMsg');
+                msg.classList.add('show');
+                setTimeout(() => {
+                    msg.classList.remove('show');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
+

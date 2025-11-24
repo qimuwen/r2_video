@@ -1,0 +1,18 @@
+{
+  "name": "r2-upload-tool",
+  "version": "1.0.0",
+  "description": "Batch upload tool for Cloudflare R2",
+  "main": "upload.js",
+  "scripts": {
+    "upload": "node upload.js",
+    "test": "node upload.js --help"
+  },
+  "keywords": ["cloudflare", "r2", "upload", "batch"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.450.0",
+    "progress": "^2.0.3"
+  }
+}
+
